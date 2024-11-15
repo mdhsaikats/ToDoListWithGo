@@ -1,28 +1,28 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 )
 
-func add(todolist *[]string) {
+var todolist []string
 
-	var item string
-	fmt.Print("Enter your task: ")
-	fmt.Scanln(&item)
-	*todolist = append(*todolist, item)
-	fmt.Print("Add Successfully\n")
-
-}
-func delete() {
+func add(item string) {
+	todolist = append(todolist, item)
+	fmt.Print("Added Successfully\n")
 
 }
 func showall() {
-
+	for i, item := range todolist {
+		fmt.Println(i, ": ", item)
+	}
 }
 func main() {
-	var todolist []string
+
 	fmt.Println("To Do List")
 	var option int
+	reader := bufio.NewReader(os.Stdin)
 
 	for {
 		fmt.Printf("1.Add\n2.Showlist\n3.Delete\n4.Exit\n")
@@ -32,24 +32,23 @@ func main() {
 		switch option {
 		case 1:
 			{
-				add(&todolist)
+				fmt.Print("Enter your task: ")
+				item, err := reader.ReadString('\n')
+				if err != nil {
+					fmt.Println("Error: ", err)
+					continue
+				}
+				item = item[:len(item)-1]
+				add(item)
 			}
 		case 2:
 			{
 				showall()
 			}
-		case 3:
-			{
-				delete()
-			}
-		case 4:
-			{
-				fmt.Print("Exiting....")
-				return
-			}
 		default:
 			{
-				fmt.Printf("Error!")
+				fmt.Println("Exiting...")
+				os.Exit(1)
 			}
 		}
 	}
