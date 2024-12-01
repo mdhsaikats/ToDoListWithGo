@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 var todolist []string
@@ -11,6 +12,29 @@ var todolist []string
 func add(item string) {
 	todolist = append(todolist, item)
 	fmt.Print("Added Successfully\n")
+}
+
+func edittask() {
+	if len(todolist) == 0 {
+		fmt.Println("No tasks to edit.")
+		return
+	}
+
+	fmt.Print("Enter task number to edit: ")
+	var index int
+	_, err := fmt.Scanf("%d", &index)
+	if err != nil || index < 0 || index >= len(todolist) {
+		fmt.Println("Invalid task number.")
+		return
+	}
+
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Enter the new task: ")
+	newTask, _ := reader.ReadString('\n')
+	newTask = strings.TrimSpace(newTask)
+
+	todolist[index] = newTask
+	fmt.Println("Task edited successfully.")
 }
 func showall() {
 	for i, item := range todolist {
@@ -73,6 +97,10 @@ func main() {
 				}
 				delete(index)
 
+			}
+		case 4:
+			{
+				edittask()
 			}
 		default:
 			{
