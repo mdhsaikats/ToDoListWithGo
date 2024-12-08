@@ -9,6 +9,45 @@ import (
 
 var todolist []string
 
+func savetofile() {
+	file, err := os.Create("todolist.txt")
+	if err != nil {
+		fmt.Print("Error creating file: ", err)
+		return
+	}
+	defer file.Close()
+	for _, task := range todolist {
+		_, err = file.WriteString(task + "\n")
+		if err != nil {
+			fmt.Print("Error writing to file:", err)
+			return
+		}
+	}
+
+	fmt.Print("Succesfully wrote to the file")
+}
+
+func loadfromfile() {
+	file, err := os.Open("todolist.txt")
+	if err != nil {
+		if os.IsNotExist(err) {
+			return
+		}
+		fmt.Println("Error opening file", err)
+		return
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		todolist = append(todolist, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error reading file: ", err)
+	}
+
+}
+
 func add(item string) {
 	todolist = append(todolist, item)
 	fmt.Print("Added Successfully\n")
@@ -22,13 +61,14 @@ func edittask() {
 
 	fmt.Print("Enter task number to edit: ")
 	var index int
-	_, err := fmt.Scanf("%d", &index)
-	if err != nil || index < 0 || index >= len(todolist) {
+	reader := bufio.NewReader(os.Stdin)
+	input, _ := reader.ReadString('\n')
+	index, err := fmt.Sscanf(input, "%d", &index)
+	if err != nil || index != 1 || index < 0 || index >= len(todolist) {
 		fmt.Println("Invalid task number.")
 		return
 	}
 
-	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Enter the new task: ")
 	newTask, _ := reader.ReadString('\n')
 	newTask = strings.TrimSpace(newTask)
@@ -36,6 +76,7 @@ func edittask() {
 	todolist[index] = newTask
 	fmt.Println("Task edited successfully.")
 }
+
 func showall() {
 	for i, item := range todolist {
 		fmt.Println(i, ": ", item)
@@ -49,32 +90,42 @@ func delete(index int) {
 	}
 	todolist = append(todolist[:index], todolist[index+1:]...)
 	fmt.Println("Task delete successfully.")
-
 }
+
 func main() {
 	fmt.Println("To Do List")
-	var option int
+	loadfromfile()
+
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
-		fmt.Printf("1.Add\n2.Showlist\n3.Delete\n4.Exit\n")
-		fmt.Printf("Enter You Option: ")
-		_, err := fmt.Scanf("%d", &option)
+
+		fmt.Printf("1.Add\n2.Showlist\n3.Edit\n4.Delete\n5.Exit\n")
+		fmt.Print("Enter Your Option: ")
+
+		option, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Println("Invalid input, please enter a number.")
-			reader.ReadString('\n') // clear the input buffer
+			fmt.Println("Error reading option:", err)
 			continue
 		}
-		switch option {
+		option = strings.TrimSpace(option)
+		var choice int
+		_, err = fmt.Sscanf(option, "%d", &choice)
+		if err != nil {
+			fmt.Println("Invalid input, please enter a number.")
+			continue
+		}
+
+		switch choice {
 		case 1:
 			{
-				fmt.Print("Enter your task: ")
+				fmt.Print("Enter your task: \n")
 				item, err := reader.ReadString('\n')
 				if err != nil {
 					fmt.Println("Error: ", err)
 					continue
 				}
-				item = item[:len(item)-1]
+				item = strings.TrimSpace(item)
 				add(item)
 			}
 		case 2:
@@ -83,31 +134,37 @@ func main() {
 			}
 		case 3:
 			{
+				edittask()
+			}
+		case 4:
+			{
 				if len(todolist) == 0 {
 					fmt.Println("No tasks to delete.")
 					continue
 				}
 				fmt.Print("Enter task number to delete: ")
+				indexStr, _ := reader.ReadString('\n')
 				var index int
-				_, err := fmt.Scanf("%d", &index)
-				if err != nil {
+				_, err := fmt.Sscanf(indexStr, "%d", &index)
+				if err != nil || index < 0 || index >= len(todolist) {
 					fmt.Println("Invalid input.")
-					reader.ReadString('\n')
 					continue
 				}
 				delete(index)
-
 			}
-		case 4:
+		case 5:
 			{
-				edittask()
+				savetofile()
+				fmt.Println("Exiting... Goodbye!")
+				os.Exit(0)
 			}
+
 		default:
 			{
+				savetofile()
 				fmt.Println("Exiting...")
 				os.Exit(1)
 			}
 		}
 	}
-
 }
